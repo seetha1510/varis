@@ -20,7 +20,7 @@ cursor = conn.cursor()
 
 # create tables
 
-try: #Builds segment table
+try: #Builds segments table
     segment_table = '''
     CREATE TABLE segments(
         SEG_ID text PRIMARY KEY,
@@ -45,7 +45,7 @@ except:
         conn.close()
         print("Unable to create segment table, closing connection.")
 
-try: #Builds category table
+try: #Builds categories table
     category_table = '''
     CREATE TABLE categories(
         CAT_ID text PRIMARY KEY ,
@@ -74,7 +74,7 @@ except:
         conn.close()
         print("Unable to create category table, closing connection.")
         
-try: #Builds class table
+try: #Builds classes table
     class_table = '''
     CREATE TABLE classes(
         CLS_ID text PRIMARY KEY,
@@ -103,7 +103,7 @@ except:
         conn.close()
         print("Unable to create class table, closing connection.")
 
-try: #Builds subclass table
+try: #Builds subclasses table
     subclass_table = '''
     CREATE TABLE subclasses(
         SUB_ID text PRIMARY KEY,
