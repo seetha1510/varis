@@ -32,7 +32,7 @@ try:
     )
     '''
     cursor.execute(features_table)
-    print("Ping1")
+    #print("Ping1")
 except:
     
     try: #delete existing table and remake it
@@ -46,10 +46,10 @@ except:
         )
         '''
         cursor.execute(features_table)
-        print("Ping2")
+        #print("Ping2")
     except:
         conn.close()
-        print("Ping3")
+        #print("Ping3")
 
 
 try:
@@ -59,7 +59,7 @@ try:
     cursor.execute("SELECT SKU, CombinedDescription FROM products")  # execute a simple SQL select query
     descriptions = cursor.fetchall()
     
-    print("Ping4")
+    #print("Ping4")
     #Initilize a Rake variable
     r = Rake()
     
@@ -79,8 +79,8 @@ try:
     
 except:
     conn.close()
-    print("Ping5")
+    #print("Ping5")
 
 #Close the connection
 conn.close()
-print("Ping6")
+#print("Ping6")
