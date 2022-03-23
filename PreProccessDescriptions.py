@@ -110,7 +110,7 @@ try:
     test = "test'"
     ssql_time = time.time()
     for a in df.index:
-        print(df.loc[a,'description'])
+        #print(df.loc[a,'description'])
         cursor.execute("UPDATE products SET CombinedDescription = ? WHERE SKU = ?", (str(df.loc[a,'description']), str(df.loc[a,'SKU']))) 
         #print(df.loc[a,'description'])
     conn.commit()
