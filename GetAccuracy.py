@@ -2,6 +2,8 @@ import sqlite3
 import random
 import csv
 import pandas as pd
+from difflib import SequenceMatcher
+import time
 
 # connect to sql server
 databaseName = "test2.db"
@@ -22,13 +24,28 @@ def read_query(conn, query):
 #used to compare features of a product to features of the bins its in
 #currently set to return random value, will implement later
 def compare_features(a_features, b_features):
-    return random.uniform(0.0,1.0)
+    #return random.uniform(0.0,1.0)
+    s = SequenceMatcher(lambda x: x == " ", a_features[0], b_features)
+    #print(a_features[0])
+    #print (s.ratio())
+    return s.ratio()
+    #return round(s.ratio(),4)
 
 def compare_bin_level(product_features, bin_features, bin_id):
     scores = []
     for i in range(len(bin_features)):
+        #print(product_features)
         s = compare_features(product_features, bin_features[i])
-        scores.extend((s, bin_id[i]))
+        #print(str(s) + " " + str(bin_id[i]))
+        scores.append((s, bin_id[i]))
+    return scores
+
+def compare_seg_level(product_features, bin_features, bin_id):
+    scores = []
+    for i in range(len(bin_features)):
+        s = compare_features(product_features, bin_features[i][0])
+        #print(str(s) + " " + str(bin_id[i]))
+        scores.append((s, bin_id[i][0]))
     return scores
 
 #create empty arrays to keep track of sku, features, subclass, class, category, and segment
@@ -94,6 +111,7 @@ segments = read_query(conn, query)
 
 query = "SELECT SEG_ID from segment_features"
 seg_ids = read_query(conn, query)
+#print(seg_ids)
 
 query = "SELECT SEG_Features from segment_features"
 seg_features = read_query(conn, query)
@@ -131,27 +149,32 @@ writer.writerow(header)
 
 #iterate through each product in the table
 for i in range(len(skus)):
+    if i == 50:
+        break
+    start_time = time.time()
     #get the segment, category, class, subclass features
     #compare to features
     data_seg_features = segment_dic.get(segments[i],[])
     data_cat_features = category_dic.get(categories[i],[])
     data_cls_features = class_dic.get(classes[i],[])
     data_sub_features = subclass_dic.get(subclasses[i],[])
-    data_seg_score = compare_features(features[i], data_seg_features)
-    data_cat_score = compare_features(features[i], data_cat_features)
-    data_cls_score = compare_features(features[i], data_cls_features)
-    data_sub_score = compare_features(features[i], data_sub_features)
+    data_seg_score = compare_features(features[i], data_seg_features[0])
+    data_cat_score = compare_features(features[i], data_cat_features[0])
+    data_cls_score = compare_features(features[i], data_cls_features[0])
+    data_sub_score = compare_features(features[i], data_sub_features[0])
 
-    segment_scores = compare_features(features[i], seg_features, seg_ids)
+    segment_scores = compare_seg_level(features[i], seg_features, seg_ids)
+    #print(segment_scores)
     segment_scores.sort()
 
     category_features = []
     category_ids = []
 
-    for i in range(4):
-        seg = segment_scores[i][1]
-        q = "SEG_ID == " + str(seg)
-        cat_temp = categories_features_lookup.query(q)
+    for j in range(4):
+        seg = segment_scores[j][1]
+        #print(seg)
+        cat_temp = categories_features_lookup.loc[categories_features_lookup['SEG_ID'] == seg]
+        #print(cat_temp)
         category_features.extend(cat_temp['CAT_Features'])
         category_ids.extend(cat_temp['CAT_ID'])
         #query for all the categories that belong to this segment
@@ -160,13 +183,15 @@ for i in range(len(skus)):
     category_scores = compare_bin_level(features[i], category_features, category_ids)
     category_scores.sort()
     
+    #print(category_scores)
+    
     class_features = []
     class_ids = []
     
-    for i in range(20):
-        cat = category_scores[i][1]
-        q = "CAT_ID == " + str(cat)
-        cls_temp = classes_features_lookup.query(q)
+    for j in range(4):
+        cat = category_scores[j][1]
+        cls_temp = classes_features_lookup.loc[classes_features_lookup['CAT_ID'] == cat]
+        #cls_temp = classes_features_lookup.query(q)
         class_features.extend(cls_temp['CLS_Features'])
         class_ids.extend(cls_temp['CLS_ID'])
         #query for all classes that belong to this category
@@ -177,10 +202,10 @@ for i in range(len(skus)):
 
     subclass_features = []
     subclass_ids = []
-    for i in range(50):
-        clas = class_scores[i][1]
-        q = "CAT_ID == " + str(cat)
-        sub_temp = subclasses_features_lookup.query(q)
+    for j in range(4):
+        clas = class_scores[j][1]
+        sub_temp = subclasses_features_lookup.loc[subclasses_features_lookup['CLS_ID'] == clas]
+        #sub_temp = subclasses_features_lookup.query(q)
         subclass_features.extend(sub_temp['SUB_Features'])
         subclass_ids.extend(sub_temp['SUB_ID'])
         #query for all classes that belong to this category
@@ -190,13 +215,19 @@ for i in range(len(skus)):
     subclass_scores.sort()
 
     #output to csv file   
-    
-    segment_score = data_seg_score / segment_scores[0][0]
-    category_score = data_cat_score / category_scores[0][0]
-    class_score = data_cls_score / class_scores[0][0]
-    subclass_score = data_sub_score / subclass_scores[0][0]
+    #print(segment_scores)
+    ######################################
+    ##### TO DO: add logic that shortcuts the rest of the evaluations to zero if misclassification at higher level is found (i.e. if misclassified at category, then class and subclass should be 0)
+    ######################################
+    segment_score = data_seg_score / segment_scores[len(segment_scores)-1][0]
+    category_score = (data_cat_score / category_scores[len(category_scores)-1][0])
+    class_score = (data_cls_score / class_scores[len(class_scores)-1][0])
+    subclass_score = (data_sub_score / subclass_scores[len(subclass_scores)-1][0])
        
     row = [skus[i][0], manufacturers[i][0], mfrPartNums[i][0], segment_score, category_score, class_score, subclass_score]
+    #print(category_score, data_cat_score, category_scores[len(category_scores)-1][0])
+    end_time = time.time()
+    print("---" + str(i) + ": " + str(end_time-start_time) + " seconds ---")
     writer.writerow(row)
    
 
