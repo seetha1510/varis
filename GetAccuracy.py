@@ -1,6 +1,7 @@
 import sqlite3
 import random
 import csv
+import pandas as pd
 
 # connect to sql server
 databaseName = "test2.db"
@@ -20,8 +21,15 @@ def read_query(conn, query):
 
 #used to compare features of a product to features of the bins its in
 #currently set to return random value, will implement later
-def compare_features(product_features, bin_features):
+def compare_features(a_features, b_features):
     return random.uniform(0.0,1.0)
+
+def compare_bin_level(product_features, bin_features, bin_id):
+    scores = []
+    for i in range(len(bin_features)):
+        s = compare_features(product_features, bin_features[i])
+        scores.extend((s, bin_id[i]))
+    return scores
 
 #create empty arrays to keep track of sku, features, subclass, class, category, and segment
 #of each product in the database
@@ -103,6 +111,13 @@ mfrPartNums = read_query(conn, query)
 #put features in dict for easy lookup
 mfr_dic = dict(zip(manufacturers, mfrPartNums))
 
+categories_features_lookup = pd.read_sql_query("SELECT categories.CAT_ID, categories.SEG_ID, category_features.CAT_Features FROM categories INNER JOIN category_features USING(CAT_ID)", conn)
+
+classes_features_lookup = pd.read_sql_query("SELECT classes.CLS_ID, classes.CAT_ID, class_features.CLS_Features FROM classes INNER JOIN class_features USING(CLS_ID)", conn)
+
+subclasses_features_lookup = pd.read_sql_query("SELECT subclasses.SUB_ID, subclasses.CLS_ID, subclass_features.SUB_Features FROM subclasses INNER JOIN subclass_features USING(SUB_ID)", conn)
+
+
 # open the file in the write mode
 f = open('ClassificationAccuracy.csv', 'w', encoding='UTF8', newline='')
 
@@ -116,12 +131,12 @@ writer.writerow(header)
 
 #iterate through each product in the table
 for i in range(len(skus)):
-    #get the segment, category, class, subclass
+    #get the segment, category, class, subclass features
     #compare to features
-    data_seg_features = []
-    data_cat_features = []
-    data_cls_features = []
-    data_sub_features = []
+    data_seg_features = segment_dic.get(segments[i],[])
+    data_cat_features = category_dic.get(categories[i],[])
+    data_cls_features = class_dic.get(classes[i],[])
+    data_sub_features = subclass_dic.get(subclasses[i],[])
     data_seg_score = compare_features(features[i], data_seg_features)
     data_cat_score = compare_features(features[i], data_cat_features)
     data_cls_score = compare_features(features[i], data_cls_features)
@@ -132,33 +147,46 @@ for i in range(len(skus)):
 
     category_features = []
     category_ids = []
+
     for i in range(4):
         seg = segment_scores[i][1]
+        q = "SEG_ID == " + str(seg)
+        cat_temp = categories_features_lookup.query(q)
+        category_features.extend(cat_temp['CAT_Features'])
+        category_ids.extend(cat_temp['CAT_ID'])
         #query for all the categories that belong to this segment
         #add the features of the category to the list and the ids
 
-    category_scores = compare_features(features[i], category_features, category_ids)
+    category_scores = compare_bin_level(features[i], category_features, category_ids)
     category_scores.sort()
-
+    
     class_features = []
     class_ids = []
     
     for i in range(20):
         cat = category_scores[i][1]
+        q = "CAT_ID == " + str(cat)
+        cls_temp = classes_features_lookup.query(q)
+        class_features.extend(cls_temp['CLS_Features'])
+        class_ids.extend(cls_temp['CLS_ID'])
         #query for all classes that belong to this category
         # add the features of the classes to the list and the ids
     
-    class_scores = compare_features(features[i], class_features, class_ids)
+    class_scores = compare_bin_level(features[i], class_features, class_ids)
     class_scores.sort()
 
     subclass_features = []
     subclass_ids = []
     for i in range(50):
         clas = class_scores[i][1]
+        q = "CAT_ID == " + str(cat)
+        sub_temp = subclasses_features_lookup.query(q)
+        subclass_features.extend(sub_temp['SUB_Features'])
+        subclass_ids.extend(sub_temp['SUB_ID'])
         #query for all classes that belong to this category
         # add the features of the subclasses to the list and the ids
 
-    subclass_scores = compare_features(features[i], subclass_features, subclass_ids)
+    subclass_scores = compare_bin_level(features[i], subclass_features, subclass_ids)
     subclass_scores.sort()
 
     #output to csv file   
