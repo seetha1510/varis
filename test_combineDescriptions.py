@@ -11,6 +11,7 @@ def test_getConnection():
     if os.path.exists("test1"):
         os.remove("test1")
 
+# check if CombinedDescription column exists in products table
 def test_combineDescriptions():
     conn = CombineDescriptions.getConnection("test2.db")
     # CombineDescriptions.combineDescriptions(conn)
