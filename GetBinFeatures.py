@@ -85,7 +85,7 @@ def combineSubclassFeatures(conn):
                         str(sub[0]) +
                         "' GROUP BY SubClass")
             sub_superset_desc = cursor.fetchall()
-            print(sub_superset_desc[0][0])
+            # print(sub_superset_desc[0][0])
             r.extract_keywords_from_text(sub_superset_desc[0][0])
             k = r.get_ranked_phrases()
             k = ', '.join(k)

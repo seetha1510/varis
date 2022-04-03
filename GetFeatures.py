@@ -89,6 +89,7 @@ def main():
     conn = getConnection("test2.db")
 
     createFeaturesTable(conn)
+    func2(conn)
     #Close the connection
     conn.close()
     #print("Ping6")
