@@ -5,10 +5,10 @@ import pandas as pd
 from difflib import SequenceMatcher
 import time
 import string
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.feature_extraction.text import CountVectorizer
+# from sklearn.metrics.pairwise import cosine_similarity
+# from sklearn.feature_extraction.text import CountVectorizer
 import pandas as pd
-from docsim import DocSim
+#from docsim import DocSim
 
 
 from nltk.corpus import stopwords
@@ -37,18 +37,20 @@ def clean_string (text):
     text = " ".join([word for word in text.split() if word not in stopwords])
     return text
 
-def cosine_sim_vectors(vec1, vec2):
-    vec1 = vec1.reshape(1, -1)
-    vec2 = vec2.reshape(1, -1)
-    return cosine_similarity(vec1, vec2)[0][0]
-
-def compare_features(a_features, b_features):
-    #features = clean_string(a_features)
-    #bin_features = clean_string(b_features)
-    docsim = DocSim(verbose=True)
-    similarities = docsim.similarity_query(a_features, b_features)
-    print("Similarity: ", similarities)
-    return similarities
+# def cosine_sim_vectors(vec1, vec2):
+#     vec1 = vec1.reshape(1, -1)
+#     vec2 = vec2.reshape(1, -1)
+#     return cosine_similarity(vec1, vec2)[0][0]
+# =============================================================================
+# 
+# def compare_features(a_features, b_features):
+#     #features = clean_string(a_features)
+#     #bin_features = clean_string(b_features)
+#     docsim = DocSim(verbose=True)
+#     similarities = docsim.similarity_query(a_features, b_features)
+#     print("Similarity: ", similarities)
+#     return similarities
+# =============================================================================
 
 #used to compare features of a product to features of the bins its in
 #currently set to return random value, will implement later
@@ -74,29 +76,34 @@ def compare_features(a_features, b_features):
 # =============================================================================
 
 # =============================================================================
-# def compare_features_sequenceMatch(a_features, b_features):
-#     features_a = clean_string(a_features)
-#     features_b = clean_string(b_features)
-#     s = SequenceMatcher(lambda x: x == " ", features_a, features_b)
-#     print (s.ratio())
-#     #return s.ratio()
+def compare_features(a_features, b_features):
+     features_a = clean_string(a_features)
+     features_b = clean_string(b_features)
+     s = SequenceMatcher(lambda x: x == " ", features_a, features_b)
+     print (s.ratio())
+     return s.ratio()
 # =============================================================================
     
 
 def compare_bin_level(product_features, bin_features, bin_id):
-    scores = []
-    for i in range(len(bin_features)):
-        #print(product_features)
-        s = compare_features(product_features, bin_features[i])
-        #print(str(s) + " " + str(bin_id[i]))
-        scores.append((s, bin_id[i]))
-    return scores
+     scores = []
+     for i in range(len(bin_features)):
+         #print(product_features)
+         s = compare_features(product_features, bin_features[i])
+         #print(str(s) + " " + str(bin_id[i]))
+         scores.append((s, bin_id[i]))
+     return scores
 
 
-def compare_seg_level(product_features, bin_features, bin_id):
-    scores = compare_features(product_features, bin_features)
-    #print(str(s) + " " + str(bin_id[i]))
-    return scores
+# =============================================================================
+# def compare_bin_level(product_features, bin_features, bin_id):
+#     scores = compare_features(product_features, bin_features)
+#     #print(str(s) + " " + str(bin_id[i]))
+#     scores_id = []
+#     for i in range(len(scores)):
+#         scores_id.append((i, bin_id[i]))
+#     return scores_id
+# =============================================================================
 
 # =============================================================================
 # def compare_seg_level(product_features, bin_features, bin_id):
@@ -219,31 +226,44 @@ writer.writerow(header)
 
 #iterate through each product in the table
 for i in range(len(skus)):
-    if i == 15:
+    if i == 3:
         break
     start_time = time.time()
     #get the segment, category, class, subclass features
     #compare to features
-    data_seg_features = segment_dic.get(segments[i],[])
+    # data_seg_features = segment_dic.get(segments[i],[])
     data_cat_features = category_dic.get(categories[i],[])
     data_cls_features = class_dic.get(classes[i],[])
     data_sub_features = subclass_dic.get(subclasses[i],[])
     #print(features[i])
     #print(data_seg_features)
-    data_seg_score = 1#compare_features(features[i], data_seg_features)
-    data_cat_score = 1#compare_features(features[i], data_cat_features)
-    data_cls_score = 1#compare_features(features[i], data_cls_features)
-    data_sub_score = 1#compare_features(features[i], data_sub_features)
+    # data_seg_score = 1#compare_features(features[i], data_seg_features)
+    # data_cat_score = 1#compare_features(features[i], data_cat_features)
+    # data_cls_score = 1#compare_features(features[i], data_cls_features)
+    # data_sub_score = 1#compare_features(features[i], data_sub_features)
 
-    segment_scores = compare_seg_level(features[i], seg_features, seg_ids)
+    segment_scores = compare_bin_level(features[i], seg_features, seg_ids)
     #print(segment_scores)
-    segment_scores.sort()
+
+    data_seg_score = [x for x, y in segment_scores if y==segments[i]]
+    segment_scores.sort(reverse=True)
+    print("Segment scores:", segment_scores)
+    
+    print("Segment score:", data_seg_score[0])
 
     category_features = []
     category_ids = []
 
+    # category_features.extend(data_cat_features)
+    # category_ids.extend(categories[i])
+
+    data_seg_bool = False
+
     for j in range(4):
         seg = segment_scores[j][1]
+        if (seg==segments[i]):
+            data_seg_bool = True
+            print("Checkpoint 1")
         #print(seg)
         cat_temp = categories_features_lookup.loc[categories_features_lookup['SEG_ID'] == seg]
         #print(cat_temp)
@@ -252,16 +272,30 @@ for i in range(len(skus)):
         #query for all the categories that belong to this segment
         #add the features of the category to the list and the ids
 
+    if (data_seg_bool == False):
+        print("Checkpont 2")
+        cat_temp = categories_features_lookup.loc[categories_features_lookup['SEG_ID'] == segments[i]]
+        category_features.extend(cat_temp['CAT_Features'])
+        category_ids.extend(cat_temp['CAT_ID'])
+
     category_scores = compare_bin_level(features[i], category_features, category_ids)
-    category_scores.sort()
+    data_cat_score = [x for x, y in category_scores if y==categories[i]]
+    category_scores.sort(reverse=True)
+    print("Category scores:", category_scores)
+    print("Category score:", data_cat_score[0])
+    
     
     #print(category_scores)
     
     class_features = []
     class_ids = []
     
+    data_cat_bool = False
+
     for j in range(4):
         cat = category_scores[j][1]
+        if (cat==categories[i]):
+            data_cat_bool = True
         cls_temp = classes_features_lookup.loc[classes_features_lookup['CAT_ID'] == cat]
         #cls_temp = classes_features_lookup.query(q)
         class_features.extend(cls_temp['CLS_Features'])
@@ -269,13 +303,25 @@ for i in range(len(skus)):
         #query for all classes that belong to this category
         # add the features of the classes to the list and the ids
     
+    if(data_cat_bool == False):
+        cls_temp = classes_features_lookup.loc[classes_features_lookup['CAT_ID'] == categories[i]]
+        class_features.extend(cls_temp['CLS_Features'])
+        class_ids.extend(cls_temp['CLS_ID'])
+    
     class_scores = compare_bin_level(features[i], class_features, class_ids)
-    class_scores.sort()
+    data_cls_score = [x for x, y in class_scores if y==classes[i]]
+    class_scores.sort(reverse=True)
+    print("Class score:", data_cls_score[0])
 
     subclass_features = []
     subclass_ids = []
+
+    data_cls_bool = False
+
     for j in range(4):
         clas = class_scores[j][1]
+        if (clas==classes[i]):
+            data_cls_bool = True
         sub_temp = subclasses_features_lookup.loc[subclasses_features_lookup['CLS_ID'] == clas]
         #sub_temp = subclasses_features_lookup.query(q)
         subclass_features.extend(sub_temp['SUB_Features'])
@@ -283,18 +329,25 @@ for i in range(len(skus)):
         #query for all classes that belong to this category
         # add the features of the subclasses to the list and the ids
 
+    if(data_cls_bool == False):
+        sub_temp = subclasses_features_lookup.loc[subclasses_features_lookup['CLS_ID'] == classes[i]]
+        subclass_features.extend(sub_temp['SUB_Features'])
+        subclass_ids.extend(sub_temp['SUB_ID'])
+
     subclass_scores = compare_bin_level(features[i], subclass_features, subclass_ids)
-    subclass_scores.sort()
+    data_sub_score = [x for x, y in subclass_scores if y==subclasses[i]]
+    subclass_scores.sort(reverse=True)
+    print("Subclass score:", data_sub_score[0])
 
     #output to csv file   
     #print(segment_scores)
     ######################################
     ##### TO DO: add logic that shortcuts the rest of the evaluations to zero if misclassification at higher level is found (i.e. if misclassified at category, then class and subclass should be 0)
     ######################################
-    segment_score = (data_seg_score / segment_scores[len(segment_scores)-1][0])
-    category_score = (data_cat_score / category_scores[len(category_scores)-1][0])
-    class_score = (data_cls_score / class_scores[len(class_scores)-1][0])
-    subclass_score = (data_sub_score / subclass_scores[len(subclass_scores)-1][0])
+    segment_score = (data_seg_score[0] / segment_scores[0][0])
+    category_score = (data_cat_score[0] / category_scores[0][0])
+    class_score = (data_cls_score[0] / class_scores[0][0])
+    subclass_score = (data_sub_score[0] / subclass_scores[0][0])
        
     row = [skus[i][0], manufacturers[i][0], mfrPartNums[i][0], segment_score, category_score, class_score, subclass_score]
     #print(category_score, data_cat_score, category_scores[len(category_scores)-1][0])
@@ -305,4 +358,3 @@ for i in range(len(skus)):
 
 # close the file
 f.close()
-    
