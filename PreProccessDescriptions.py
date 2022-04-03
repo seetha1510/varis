@@ -18,6 +18,9 @@ import traceback
 from bs4 import BeautifulSoup
 import time
 
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
 # connect to sql server
 databaseName = "test2.db"
 conn = sqlite3.connect(databaseName)
