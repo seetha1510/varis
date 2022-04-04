@@ -51,6 +51,7 @@ def test_getConnection_exists():
         c.execute('''SELECT * from testTable''')
         # print(str(e))
     
+# TODO: check parsing --> spaces, special characters
 
     
 
