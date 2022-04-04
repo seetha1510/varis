@@ -108,3 +108,6 @@ def main():
 
     #Close the connection
     conn.close()
+
+if __name__ == "__main__":
+    main()
