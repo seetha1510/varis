@@ -258,7 +258,7 @@ for i in range(len(skus)):
 
     data_seg_bool = False
 
-    for j in range(0):
+    for j in range(2):
         seg = segment_scores[j][1]
         if (seg==segments[i]):
             data_seg_bool = True
@@ -289,7 +289,7 @@ for i in range(len(skus)):
     
     data_cat_bool = False
 
-    for j in range(0):
+    for j in range(4):
         cat = category_scores[j][1]
         if (cat==categories[i]):
             data_cat_bool = True
@@ -317,7 +317,7 @@ for i in range(len(skus)):
 
     data_cls_bool = False
 
-    for j in range(0):
+    for j in range(4):
         clas = class_scores[j][1]
         if (clas==classes[i]):
             data_cls_bool = True
