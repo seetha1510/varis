@@ -5,18 +5,32 @@ import os
 
 import CombineDescriptions
 
-def test_getConnection():
-    CombineDescriptions.getConnection("test1")
-    assert os.path.exists("test1")
-    if os.path.exists("test1"):
-        os.remove("test1")
+def test_getConnection(name): #Checks the module can make a connection to the database
+    conn = CombineDescriptions.getConnection(str(name))
+    assert os.path.exists(str(name))
+    conn.close()
+    if os.path.exists(str(name)):
+        os.remove(str(name))
 
-# check if CombinedDescription column exists in products table
-def test_combineDescriptions():
-    conn = CombineDescriptions.getConnection("test2.db")
-    # CombineDescriptions.combineDescriptions(conn)
+def test_Empty_combineDescriptions(name):
+    conn = CombineDescriptions.getConnection(name)
+    CombineDescriptions.combineDescriptions(conn)
+    conn.close()
+
+
+def test_combineDescriptions(name):
+    conn = CombineDescriptions.getConnection(name)
+    CombineDescriptions.combineDescriptions(conn)
     cursor = conn.cursor()
     stmt = "SELECT EXISTS(SELECT CombinedDescription FROM products)"
     cursor.execute(stmt)
     res = cursor.fetchone()
+    conn.close()
     assert res[0] == 1
+
+
+name = "test4.db"
+test_getConnection(name)
+#test_Empty_combineDescriptions(name)
+test_combineDescriptions(name)
+    

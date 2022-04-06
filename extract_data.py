@@ -20,8 +20,8 @@ def getConnection(dbName):
     return conn
 
 def main():
-    dataset = importDataSet('Capstone_Dataset_1.csv')
-    conn = getConnection('test2.db')
+    dataset = importDataSet('Capstone_UAT_Short.csv')
+    conn = getConnection('short.db')
     cursor = conn.cursor()
 
     # create tables

@@ -18,10 +18,10 @@ import traceback
 from bs4 import BeautifulSoup
 import time
 
-# connect to sql server
-databaseName = "test2.db"
-conn = sqlite3.connect(databaseName)
-cursor = conn.cursor()
+
+def getConnection(dbName):
+    conn = sqlite3.connect(dbName)
+    return conn
 
 """
 def removeHTML(description):
@@ -72,59 +72,69 @@ def lowerCase(df): #set all descriptions to lowercase
     return df
 
 
+def PreProccessDescriptions(conn):
+    cursor = conn.cursor()
+    try:
+        raw_descr =cursor.execute('SELECT SKU, CombinedDescription FROM products')
+        #cursor.execute('SELECT SKU, CombinedDescription FROM products')
+        #raw_descr = cursor.fetchall() #Stores all the returned rows
+        
+        
+        df = pd.DataFrame(columns=['SKU', 'description'], dtype=object)
+        
+        sappend_time = time.time()
+        i = 0
+        for r in raw_descr:
+            #if i == 10:
+            #    break
+            sku = r[0]
+            desc = r[1]
+            df = df.append({'SKU': sku, 'description': desc}, ignore_index = True)
+            #i = i+1
+            #print(r)
+        eappend_time = time.time()
+        print("---Populate time: %s seconds ---" % (eappend_time - sappend_time))
+        
+        scase_time = time.time()
+        df = lowerCase(df) #Convert all text to lowercase
+        ecase_time = time.time()
+        print("---Case time: %s seconds ---" % (ecase_time - scase_time))
+        
+        shtml_time = time.time()
+        #df = cleanHTML(df) #remove all HTML tags
+        df = otherHTML(df) #remove all HTML tags
+        #df = regexHTML(df) #remove all HTML tags
+        #print(df['description'])
+        ehtml_time = time.time()
+        print("---HTML time: %s seconds ---" % (ehtml_time - shtml_time))
+        
+        test = "test'"
+        ssql_time = time.time()
+        for a in df.index:
+            #print(df.loc[a,'description'])
+            cursor.execute("UPDATE products SET CombinedDescription = ? WHERE SKU = ?", (str(df.loc[a,'description']), str(df.loc[a,'SKU']))) 
+            #print(df.loc[a,'description'])
+        conn.commit()
+        esql_time = time.time()    
+        print("---SQL time: %s seconds ---" % (esql_time - ssql_time))
+    
+    except:
+        print('Error: Unable to preproccess.')
+        traceback.print_exc()
+        conn.close()
+    
 
-try:
-    raw_descr =cursor.execute('SELECT SKU, CombinedDescription FROM products')
-    #cursor.execute('SELECT SKU, CombinedDescription FROM products')
-    #raw_descr = cursor.fetchall() #Stores all the returned rows
+def main():
+    # connect to sql server
+    conn = getConnection("short.db")
+
+    PreProccessDescriptions(conn)
     
-    
-    df = pd.DataFrame(columns=['SKU', 'description'])
-    
-    sappend_time = time.time()
-    i = 0
-    for r in raw_descr:
-        #if i == 10:
-        #    break
-        sku = r[0]
-        desc = r[1]
-        df = df.append({'SKU': sku, 'description': desc}, ignore_index = True)
-        #i = i+1
-        #print(r)
-    eappend_time = time.time()
-    print("---Populate time: %s seconds ---" % (eappend_time - sappend_time))
-    
-    scase_time = time.time()
-    df = lowerCase(df) #Convert all text to lowercase
-    ecase_time = time.time()
-    print("---Case time: %s seconds ---" % (ecase_time - scase_time))
-    
-    shtml_time = time.time()
-    #df = cleanHTML(df) #remove all HTML tags
-    df = otherHTML(df) #remove all HTML tags
-    #df = regexHTML(df) #remove all HTML tags
-    #print(df['description'])
-    ehtml_time = time.time()
-    print("---HTML time: %s seconds ---" % (ehtml_time - shtml_time))
-    
-    test = "test'"
-    ssql_time = time.time()
-    for a in df.index:
-        #print(df.loc[a,'description'])
-        cursor.execute("UPDATE products SET CombinedDescription = ? WHERE SKU = ?", (str(df.loc[a,'description']), str(df.loc[a,'SKU']))) 
-        #print(df.loc[a,'description'])
-    conn.commit()
-    esql_time = time.time()    
-    print("---SQL time: %s seconds ---" % (esql_time - ssql_time))
-    
-except:
-    print('Error: Unable to preproccess.')
-    traceback.print_exc()
+    #Close database connection
     conn.close()
-    
-# Close Connection
-conn.close()
 
+if __name__ == "__main__":
+    main()
 
 
 
