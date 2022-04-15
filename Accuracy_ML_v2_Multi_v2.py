@@ -22,7 +22,7 @@ default_model = "glove-wiki-gigaword-50"
 model = api.load(default_model)
 
 # connect to sql server
-databaseName = "UAT_updated.db"
+databaseName = "Med_ORG_v2.db"
 conn = sqlite3.connect(databaseName)
 cursor = conn.cursor()
 
@@ -537,8 +537,8 @@ def main():
         # writer.writerow(row)
     """
     pstart_time = time.time()
-    SafetyLimit = (multiprocessing.cpu_count()*0.95)
-    limit = SafetyLimit//2
+    SafetyLimit = math.floor(multiprocessing.cpu_count()*0.95)
+    limit = math.floor(SafetyLimit//2)
     #print(limit)
     #print(seg_features)
     #pool = multiprocessing.Pool()
