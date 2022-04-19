@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import sqlite3
 import re
+import traceback
 
 # connect to sql server
 # conn = sqlite3.connect(":memory:")
@@ -22,11 +23,12 @@ def getConnection(dbName):
 def combineDescriptions(conn):
     cursor = conn.cursor()
     try: #Combine the descriptions and store to dedicated column
-        cursor.execute("UPDATE products SET CombinedDescription = COALESCE(ItemTitle, '') || ' ' || COALESCE(ItemDescription, '') || ' ' || COALESCE(ItemBulletPoint, '') || ' ' || COALESCE(ItemDescription_2, '') || ' ' || COALESCE(ItemFactTag, '')")
+        cursor.execute("UPDATE products SET CombinedDescription = COALESCE(ItemTitle, '') || ' ' || COALESCE(ItemDescription, '') || ' ' || COALESCE(ItemBulletPoint, '') || ' ' || COALESCE(ItemDescription_2, '') || ' ' || COALESCE(ItemFactTag, '') || ' ' || COALESCE(Manufacturer, '') || ' ' || COALESCE(SellUOM, '') || ' ' || COALESCE(ItemPrice, '') || ' ' || COALESCE(SegmentName, '') || ' ' || COALESCE(CategoryName, '') || ' ' || COALESCE(ClassName, '') || ' ' || COALESCE(SubClassName, '')")
         conn.commit()
     except:
         conn.close()
         print("Unable to build the combined descriptions column.")
+        traceback.print_exc()
 
     """
     try: #strip out html
@@ -52,7 +54,7 @@ def combineDescriptions(conn):
     """
 
 def main():
-    conn = getConnection("test2.db")
+    conn = getConnection("UAT_2.db")
 
     combineDescriptions(conn)
     #Close database connection
