@@ -1,5 +1,6 @@
 # import libraries
 import os
+import sys
 from operator import index
 import numpy as np
 import pandas as pd
@@ -19,9 +20,9 @@ def getConnection(dbName):
     conn = sqlite3.connect(dbName)
     return conn
 
-def main():
-    dataset = importDataSet('Capstone_Dataset_1.csv')
-    conn = getConnection('test2.db')
+def main(fileName, dbName):
+    dataset = importDataSet(fileName)
+    conn = getConnection(dbName)
     cursor = conn.cursor()
 
     # create tables
