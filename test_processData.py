@@ -71,26 +71,31 @@ def test_createAndPopulateTables():
     stmt = "SELECT name FROM sqlite_master WHERE type='table' AND name='features'"
     cursor.execute(stmt)
     result = cursor.fetchone()
+    print(result)
     assert result[0] == "features"
     GetSubclassFeatures.main("test2.db")
     stmt = "SELECT name FROM sqlite_master WHERE type='table' AND name='subclass_features'"
     cursor.execute(stmt)
     result = cursor.fetchone()
+    print(result)
     assert result[0] == "subclass_features"
     GetClassFeatures.main("test2.db")
-    stmt = "SELECT name FROM sqlite_master WHERE type='table' AND name='class_features_table'"
+    stmt = "SELECT name FROM sqlite_master WHERE type='table' AND name='class_features'"
     cursor.execute(stmt)
     result = cursor.fetchone()
-    assert result[0] == "class_features_table"
+    print(result)
+    assert result[0] == "class_features"
     GetCategoryFeatures.main("test2.db")
     stmt = "SELECT name FROM sqlite_master WHERE type='table' AND name='category_features'"
     cursor.execute(stmt)
     result = cursor.fetchone()
+    print(result)
     assert result[0] == "category_features"
     GetSegmentFeatures.main("test2.db")
     stmt = "SELECT name FROM sqlite_master WHERE type='table' AND name='segment_features'"
     cursor.execute(stmt)
     result = cursor.fetchone()
+    print(result)
     assert result[0] == "segment_features"
 
     Accuracy_ML_v3.main("test2.db", "testResults.csv")
