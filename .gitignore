@@ -1,1 +1,5 @@
 __pycache__
+*.db
+result1.csv
+result1.csv
+.vscode
