@@ -1,30 +1,41 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar  3 17:26:01 2022
-
-@author: Owner
-"""
-
-# import libraries
 import os
+import sys
 from operator import index
 import numpy as np
 import pandas as pd
 import sqlite3
-from rake_nltk import Rake
 import nltk
-nltk.download('stopwords')
-nltk.download('punkt')
-
-# connect to sql server
-# conn = sqlite3.connect(":memory:")
-def getConnection(dbName):
-    conn = sqlite3.connect(dbName)
-    return conn
+import yake
+import time
 
 
-def createFeaturesTable(conn):
+
+def yake_features(text, max_words=10, duplicates=0.5, phrase_size=3):
+
+    kw_extractor = yake.KeywordExtractor()
+    language = "en"
+    max_ngram_size = phrase_size
+    deduplication_threshold = duplicates
+    numOfKeywords = max_words
+    custom_kw_extractor = yake.KeywordExtractor(lan=language, n=max_ngram_size, dedupLim=deduplication_threshold, top=numOfKeywords, features=None)
+    keywords = custom_kw_extractor.extract_keywords(text)
+    b = []
+    for kw in keywords:
+
+        b.append(kw[0])
+
+    c = ', '.join(b)
+
+    return c
+
+
+def main(dbName=sys.argv[1]):
+    
+    # connect to sql server
+    databaseName = dbName
+    conn = sqlite3.connect(databaseName)
     cursor = conn.cursor()
+    
     try:
         # create features table
         features_table = '''
@@ -35,7 +46,6 @@ def createFeaturesTable(conn):
         )
         '''
         cursor.execute(features_table)
-        #print("Ping1")
     except:
         
         try: #delete existing table and remake it
@@ -49,49 +59,42 @@ def createFeaturesTable(conn):
             )
             '''
             cursor.execute(features_table)
-            #print("Ping2")
         except:
             conn.close()
-            #print("Ping3")
-
-def func2(conn):
-    cursor = conn.cursor()
+    
+    
     try:
         #Get all of the Combined Descriptions
-        #rows = pd.read_sql_query("SELECT COUNT() FROM products ", conn)
-        #descriptions = pd.read_sql_query("SELECT CombinedDescription FROM products ", conn)
         cursor.execute("SELECT SKU, CombinedDescription FROM products")  # execute a simple SQL select query
         descriptions = cursor.fetchall()
-        
-        #print("Ping4")
-        #Initilize a Rake variable
-        r = Rake()
+      
         
         i = 0
+        start2_time = time.time()
         for d in descriptions:
-            r.extract_keywords_from_text(d[1])
-            k = r.get_ranked_phrases()
-            k = ', '.join(k)
+            sys.stdout.write("\r%d"% i)
+            i = i + 1
+           
+            k = yake_features(d[1])
+
             a = int(d[0])
             cursor.execute('''
-                        INSERT INTO features (SKU, Features)
-                        VALUES (?,?)
-                        ''',
-                        tuple((a, k))
-                        )
+                           INSERT INTO features (SKU, Features)
+                           VALUES (?,?)
+                           ''',
+                           tuple((a, k))
+                           )
+       
         conn.commit()
-        
+        end2_time = time.time()
+        print("--- Feature Extraction Time: " + str(end2_time-start2_time) + " seconds ---")    
     except:
         conn.close()
-        #print("Ping5")
-
-def main():
-    conn = getConnection("test2.db")
-
-    createFeaturesTable(conn)
+  
+    
     #Close the connection
     conn.close()
-    #print("Ping6")
 
+    
 if __name__ == "__main__":
     main()
