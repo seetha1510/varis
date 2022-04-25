@@ -1,5 +1,6 @@
 # import libraries
 import os
+import sys
 from operator import index
 import numpy as np
 import pandas as pd
@@ -12,16 +13,15 @@ def importDataSet(data):
     return dataset
 
 # connect to sql server
-# conn = sqlite3.connect(":memory:")
 def getConnection(dbName):
     if os.path.exists(dbName):
         os.remove(dbName)
     conn = sqlite3.connect(dbName)
     return conn
 
-def main():
-    dataset = importDataSet('Capstone_Dataset_1.csv')
-    conn = getConnection('test2.db')
+def main(fileName=sys.argv[1], dbName=sys.argv[2]):
+    dataset = importDataSet(fileName)
+    conn = getConnection(dbName)
     cursor = conn.cursor()
 
     # create tables
@@ -241,13 +241,6 @@ def main():
         )
     conn.commit()
 
-    # handle missing data
-
-    # handle categorical data
-
-    # split data into training and testing sets
-
-    # feature scale
 
     #Close connection
     conn.close()
