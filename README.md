@@ -30,7 +30,7 @@ Unit as well as integration tests have been conducted locally but aren't part of
 ### Using Juptyer notebook ###
 Run all cells in the makefile.ipynb. The first few cells will download required modules. The last cell requires three inputs: the datafile name (as a .csv), name of database that is going to be created, name of output file (as a .csv)
 
-# Using python #
+### Using python ###
 Download the required modules mentioned in requirements. The cells in the Juptyer notebook detail this. Once downloaded run the run.py with command line inputs: the datafile name (as a .csv), name of database that is going to be created, name of output file (as a .csv)
 
 
