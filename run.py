@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Apr 18 20:31:02 2022
-
-@author: cassidyfrier
-"""
-
 import sys
 import extract_data
 import PreProcessDescriptions
@@ -18,9 +10,12 @@ import GetSegmentFeatures
 import Accuracy_ML_v3
 
 def main():
+    # take in arguments in command line for datafile name, name of database to be created and name of file to write to 
     dataFile = sys.argv[1]
     database = sys.argv[2]
     resultFile = sys.argv[3]
+
+    # runs other files in order by passing in required inputs
     extract_data.main(dataFile, database)
     CombineDescriptions.main(database)
     PreProcessDescriptions.main(database)

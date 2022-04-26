@@ -6,27 +6,25 @@ import numpy as np
 import pandas as pd
 import sqlite3
 
-# import data set
+from GetConnection import getConnection
+
 def importDataSet(data):
+    '''
+    This function returns a pandas DataFrame that is read in from a .csv file.
+    '''
+
+    # read data which is a csv file into a DataFrame
     dataset = pd.read_csv(data, index_col=False)
-    print("Data set read!")
     return dataset
 
-# connect to sql server
-def getConnection(dbName):
-    if os.path.exists(dbName):
-        os.remove(dbName)
-    conn = sqlite3.connect(dbName)
-    return conn
+def createTables(conn):
+    '''
+    This function connects to a specified database and creates the necessary tables for the data to be read in. If a table already exists on that database, then it is deleted and re-created.
+    '''
 
-def main(fileName=sys.argv[1], dbName=sys.argv[2]):
-    dataset = importDataSet(fileName)
-    conn = getConnection(dbName)
+    # create cursor object to execute SQL statements on specified database
     cursor = conn.cursor()
-
-    # create tables
-
-    try: #Builds segments table
+    try: # builds segments table
         segment_table = '''
         CREATE TABLE segments(
             SEG_ID text PRIMARY KEY,
@@ -36,8 +34,9 @@ def main(fileName=sys.argv[1], dbName=sys.argv[2]):
         cursor.execute(segment_table)
         print("Segment table created")
     except:
-        
-        try:#delete existing table and remake it
+        # delete existing table and remake it
+        print("Segment table already exists, deleting and re-creating")
+        try:
             cursor.execute("DROP TABLE IF EXISTS segments")
             segment_table = '''
             CREATE TABLE segments(
@@ -48,10 +47,11 @@ def main(fileName=sys.argv[1], dbName=sys.argv[2]):
             cursor.execute(segment_table)
             print("Segment table created")
         except:
+            # close connection if unable to create table
             conn.close()
             print("Unable to create segment table, closing connection.")
 
-    try: #Builds categories table
+    try: # builds categories table
         category_table = '''
         CREATE TABLE categories(
             CAT_ID text PRIMARY KEY ,
@@ -63,8 +63,9 @@ def main(fileName=sys.argv[1], dbName=sys.argv[2]):
         cursor.execute(category_table)
         print("Category table created")
     except:
-        
-        try:#delete existing table and remake it
+        # delete existing table and remake it
+        print("Category table already exists, deleting and re-creating")
+        try:
             cursor.execute("DROP TABLE IF EXISTS categories")
             category_table = '''
             CREATE TABLE categories(
@@ -77,10 +78,11 @@ def main(fileName=sys.argv[1], dbName=sys.argv[2]):
             cursor.execute(category_table)
             print("Category table created")
         except:
+            # close connection if unable to create table
             conn.close()
             print("Unable to create category table, closing connection.")
             
-    try: #Builds classes table
+    try: # build class table
         class_table = '''
         CREATE TABLE classes(
             CLS_ID text PRIMARY KEY,
@@ -92,8 +94,9 @@ def main(fileName=sys.argv[1], dbName=sys.argv[2]):
         cursor.execute(class_table)
         print("Class table created")
     except:
-        
-        try:#delete existing table and remake it
+        # delete existing table and remake it
+        print("Class table already exists, deleting and re-creating")
+        try:
             cursor.execute("DROP TABLE IF EXISTS classes")
             class_table = '''
             CREATE TABLE classes(
@@ -106,10 +109,11 @@ def main(fileName=sys.argv[1], dbName=sys.argv[2]):
             cursor.execute(class_table)
             print("Class table created")
         except:
+            # close connection if unable to create table
             conn.close()
             print("Unable to create class table, closing connection.")
 
-    try: #Builds subclasses table
+    try: # build subclass table
         subclass_table = '''
         CREATE TABLE subclasses(
             SUB_ID text PRIMARY KEY,
@@ -121,8 +125,9 @@ def main(fileName=sys.argv[1], dbName=sys.argv[2]):
         cursor.execute(subclass_table)
         print("SubClass table created")
     except:
-        
-        try:#delete existing table and remake it
+        # delete existing table and remake it
+        print("Subclass table already exists, deleting and re-creating")
+        try:
             cursor.execute("DROP TABLE IF EXISTS subclasses")
             subclass_table = '''
             CREATE TABLE subclasses(
@@ -135,6 +140,7 @@ def main(fileName=sys.argv[1], dbName=sys.argv[2]):
             cursor.execute(subclass_table)
             print("SubClass table created")
         except:
+            # close connection if unable to create table
             conn.close()
             print("Unable to create SubClass table, closing connection.")
 
@@ -169,7 +175,9 @@ def main(fileName=sys.argv[1], dbName=sys.argv[2]):
         cursor.execute(product_table)
         print("Products table created")
     except:
-        try: #delete existing table and remake it
+        # delete existing table and remake it
+        print("Product table already exists, deleting and re-creating")
+        try:
             cursor.execute("DROP TABLE IF EXISTS products")
             product_table = '''
             CREATE TABLE products(
@@ -200,39 +208,51 @@ def main(fileName=sys.argv[1], dbName=sys.argv[2]):
             '''
             cursor.execute(product_table)
             print("Products table created")
-        except:
-            conn.close()
+        except Exception as e:
+            # close connection if unable to create table
             print("Unable to create products table, closing connection.")
+            raise e
+            conn.close()
+        conn.commit()
 
+def insertIntoTables(conn, dataset):
+    '''
+    This function goes through a pandas DataFrame and iterates through the rows to insert data into their respective tables.
+    '''
+    # create cursor object to execute SQL statements on specified database
+    cursor = conn.cursor()
+
+    # iterate through the rows of the dataframe
     for row in dataset.itertuples():
+        # inserting rows[11:13] into segments table
         cursor.execute('''
             INSERT OR IGNORE INTO segments (SEG_ID, SEG_NAME)
             VALUES (?, ?)
             ''',
             tuple(row)[11:13]
         )
-        
+        # inserting rows[13], rows[14], and rows[11] into categories table
         cursor.execute('''
             INSERT OR IGNORE INTO categories (CAT_ID, CAT_NAME, SEG_ID)
             VALUES (?, ?, ?)
             ''',
             tuple((row[13], row[14], row[11]))
         )
-        
+        # inserting rows[15], rows[16], and rows[13] into classes table
         cursor.execute('''
             INSERT OR IGNORE INTO classes (CLS_ID, CLS_NAME, CAT_ID)
             VALUES (?, ?, ?)
             ''',
             tuple((row[15],row[16],row[13]))
         )
-        
+        # inserting rows[17], rows[18], and rows[15] into subclasses table
         cursor.execute('''
             INSERT OR IGNORE INTO subclasses (SUB_ID, SUB_NAME, CLS_ID)
             VALUES (?, ?, ?)
             ''',
             tuple((row[17],row[18],row[15]))
         )
-        
+        # inserting rows[1:] into products table
         cursor.execute('''
             INSERT INTO products (SKU, ItemTitle, ItemDescription, ItemBulletPoint, ItemDescription_2, Manufacturer, MfrPartNum, SellUOM, ItemPrice, ItemFactTag, Segment, SegmentName, Category, CategoryName, Class, ClassName, SubClass, SubClassName)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -242,8 +262,33 @@ def main(fileName=sys.argv[1], dbName=sys.argv[2]):
     conn.commit()
 
 
-    #Close connection
+def main(fileName=None, dbName=None):
+    # set vars to parameters
+    if fileName is None:
+        fileName = sys.argv[1]
+    if dbName is None:
+        dbName = sys.argv[2]
+
+    print("filename", fileName, "dbname", dbName)
+    # create dataframe
+    dataset = importDataSet(fileName)
+    # establish connection
+    conn = getConnection(dbName)
+    # create cursor object to connected db
+    cursor = conn.cursor()
+    # create the necessary tables
+    createTables(conn)
+    # insert the relevant data into each table
+    insertIntoTables(conn, dataset)
+
+    # close connection
     conn.close()
 
+# run main function
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("file_name")
+    parser.add_argument("database_name")
+    args = parser.parse_args()
+    main(args.file_name, args.database_name)
