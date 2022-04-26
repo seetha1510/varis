@@ -81,7 +81,13 @@ def main(dbName):
     conn.close()
 
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("database_name")
+    args = parser.parse_args()
 
+    main(args.database_name)
+
+    
 
 
